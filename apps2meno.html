@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f7f3ee; direction: rtl; }
+        .card { background: white; padding: 20px; border-radius: 12px; max-width: 900px; margin: 0 auto 15px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.08); border: 1px solid #e6c594; }
+        h2 { color: #2b1b17; font-size: 20px; margin-top: 0; border-bottom: 2px solid #e6c594; padding-bottom: 8px; }
+        label { display: block; margin: 8px 0 3px; font-weight: bold; color: #3a2620; font-size: 13px; }
+        input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; }
+        textarea { height: 75px; resize: vertical; }
+        input[type="file"] { width: 100%; padding: 5px; }
+        button { background: #27ae60; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background: #219150; }
+        .btn-add { background: #2980b9; margin-bottom: 15px; }
+        .btn-add:hover { background: #1f618d; }
+        .btn-delete { background: #c0392b; padding: 6px 12px; font-size: 12px; width: auto; margin-top: 5px; }
+        .btn-delete:hover { background: #a93226; }
+        .reset-btn { background: #d35400; }
+        .reset-btn:hover { background: #b9770e; }
+        a { display: inline-block; margin-bottom: 15px; color: #2b1b17; text-decoration: none; font-weight: bold; }
+        
+        .item-editor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px; margin-top: 15px; }
+        .item-box { background: #faf8f5; border: 1px solid #ddd; padding: 12px; border-radius: 8px; position: relative; }
+        .item-preview { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; border: 1px solid #ccc; }
+
+        .slideshow-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .slide-preview-box { text-align: center; background: #fdfbf7; padding: 10px; border-radius: 8px; border: 1px solid #e6c594; }
+        .slide-preview-box img { width: 100%; height: 90px; object-fit: cover; border-radius: 6px; margin-bottom: 5px; }
+
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(43, 27, 23, 0.85); display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .login-box { background: white; padding: 30px; border-radius: 12px; width: 320px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        #admin-panel { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- نافذة تسجيل الدخول -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2 style="color:#2b1b17; border:none;">تسجيل دخول الإدارة</h2>
+            <p style="font-size: 14px; color: #666;">يرجى إدخال كلمة المرور للوصول للوحة:</p>
+            <input type="password" id="password-input" placeholder="كلمة المرور" style="margin-bottom: 15px; padding: 10px; width:100%;">
+            <button id="login-btn" style="width:100%;">دخول</button>
+            <p id="error-msg" style="color: red; font-size: 13px; margin-top: 10px; display: none;">كلمة المرور غير صحيحة!</p>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div id="admin-panel">
+        <a href="index.html">← العودة إلى المنيو الرئيسي</a>
+        <h1 style="color: #2b1b17; font-size: 24px; text-align: center; margin-bottom: 20px;">لوحة التحكم الشاملة (Firebase)</h1>
+
+        <!-- قسم صور السلايد شو -->
+        <div class="card" style="border: 2px solid #e6c594; background: #fffdf9;">
+            <h2>🌟 تغيير صور العروض والأجواء (تتغير كل 3 ثواني)</h2>
+            <div class="slideshow-preview-grid">
+                <div class="slide-preview-box">
+                    <img id="prev_slide_1" src="صوره.png" onerror="this.src='mm.png'">
+                    <label>صورة العرض الأولى:</label>
+                    <input type="file" id="file-slide-1" accept="image/*">
+                </div>
+                <div class="slide-preview-box">
+                    <img id="prev_slide_2" src="صوره.png" onerror="this.src='mm.png'">
+                    <label>صورة العرض الثانية:</label>
+                    <input type="file" id="file-slide-2" accept="image/*">
+                </div>
+                <div class="slide-preview-box">
+                    <img id="prev_slide_3" src="صوره.png" onerror="this.src='mm.png'">
+                    <label>صورة العرض الثالثة:</label>
+                    <input type="file" id="file-slide-3" accept="image/*">
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم النصوص والمطبوعات -->
+        <div class="card">
+            <h2>📝 تعديل نصوص وصور قسم "عن المطعم" والأجواء</h2>
+            <label>اسم المطعم/ العنوان الرئيسي:</label>
+            <input type="text" id="site-title-input" placeholder="مثال: مون كافيه">
+
+            <div style="margin-top: 15px;">
+                <label>نص قسم "عن مون كافيه":</label>
+                <textarea id="text-about-input"></textarea>
+                <label>تغيير صورة "عن الكافيه":</label>
+                <input type="file" id="file-about" accept="image/*">
+            </div>
+
+            <div style="margin-top: 15px;">
+                <label>نص الخانة الإضافية (أجواء الكافيه):</label>
+                <textarea id="text-inside-input"></textarea>
+                <label>تغيير صورة الخانة الإضافية:</label>
+                <input type="file" id="file-inside" accept="image/*">
+            </div>
+
+            <div style="margin-top: 15px;">
+                <label>عبارة خانة الضريبة السفلى:</label>
+                <input type="text" id="tax-text-input">
+            </div>
+        </div>
+
+        <!-- إضافة صنف جديد -->
+        <div class="card" style="border: 2px dashed #2980b9;">
+            <h2>➕ إضافة صنف جديد للمنيو</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>القسم:</label>
+                    <select id="new-item-category">
+                        <option value="offers">🔥 العروض والخصومات</option>
+                        <option value="drinks">المشروبات</option>
+                        <option value="sweets">الحلويات</option>
+                        <option value="salty">الموالح</option>
+                    </select>
+                </div>
+                <div>
+                    <label>اسم الصنف:</label>
+                    <input type="text" id="new-item-name" placeholder="اسم الصنف">
+                </div>
+                <div>
+                    <label>السعر (ج.م):</label>
+                    <input type="number" id="new-item-price" placeholder="75">
+                </div>
+                <div>
+                    <label>السعرات الحرارية:</label>
+                    <input type="number" id="new-item-calories" placeholder="120">
+                </div>
+            </div>
+            <label>المكونات أو تفاصيل العرض:</label>
+            <input type="text" id="new-item-desc" placeholder="التفاصيل...">
+            <label>رابط الصورة أو اتركها افتراضية mm.png:</label>
+            <input type="text" id="new-item-img" placeholder="mm.png">
+            <button class="btn-add" id="btn-add-item" style="margin-top: 10px; width: 100%;">إضافة الصنف فوراً</button>
+        </div>
+
+        <!-- محرر الأقسام -->
+        <div class="card" style="border: 2px solid #e74c3c;">
+            <h2 style="color: #c0392b;">🔥 إدارة العروض والخصومات</h2>
+            <div id="offers-editor" class="item-editor-grid"></div>
+        </div>
+
+        <div class="card">
+            <h2>☕ إدارة المشروبات</h2>
+            <div id="drinks-editor" class="item-editor-grid"></div>
+        </div>
+
+        <div class="card">
+            <h2>🍰 إدارة الحلويات</h2>
+            <div id="sweets-editor" class="item-editor-grid"></div>
+        </div>
+
+        <div class="card">
+            <h2>🥪 إدارة الموالح</h2>
+            <div id="salty-editor" class="item-editor-grid"></div>
+        </div>
+
+        <!-- أزرار الحفظ والإعادة -->
+        <div class="card">
+            <button id="btn-save-all" style="width: 100%;">💾 حفظ التغييرات على السحابة (Firebase)</button>
+            <button class="reset-btn" id="btn-reset-all" style="width: 100%; margin-top: 10px;">🔄 استعادة المنيو الافتراضي</button>
+        </div>
+    </div>
+
+    <!-- كود JavaScript مع Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAe-vReqTWawJRMv_XSNUFpQa6wUIQLGlg",
+            authDomain: "memo-rest.firebaseapp.com",
+            projectId: "memo-rest",
+            storageBucket: "memo-rest.firebasestorage.app",
+            messagingSenderId: "867489125406",
+            appId: "1:867489125406:web:df82cef80527ac70558a0f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const docRef = doc(db, "restaurant", "menuData");
+
+        const correctPassword = "2233";
+
+        const defaultMenuData = {
+            offers: [
+                { id: 'offer_1', name: 'عرض الثنائي الذهبي', img: 'mm.png', desc: '٢ كابتشينو + ٢ كيك شوكولاتة بسعر خاص جداً.', calories: 650, price: 180 },
+                { id: 'offer_2', name: 'كومبو الإفطار المميز', img: 'mm.png', desc: 'كرواسون أجبان + مون لاتيه التوقيع.', calories: 400, price: 120 }
+            ],
+            drinks: Array.from({length: 10}, (_, i) => ({
+                id: 'drink_' + (i + 1), name: i === 0 ? 'مون لاتيه التوقيع' : `مشروب مميز ${i + 1}`,
+                img: 'mm.png', desc: 'إسبريسو غواتيمالي، حليب طازج، سيروب الكاراميل المملح ورغوة ناعمة.',
+                calories: 150 + (i * 10), price: 65 + (i * 5)
+            })),
+            sweets: Array.from({length: 10}, (_, i) => ({
+                id: 'sweet_' + (i + 1), name: i === 0 ? 'كيكة الشوكولاتة الفاخرة' : `حلى فاخر ${i + 1}`,
+                img: 'mm.png', desc: 'كيك شوكولاتة داكنة غنية مع غناش الكاكاو البلجيكي والمكسرات.',
+                calories: 300 + (i * 15), price: 85 + (i * 5)
+            })),
+            salty: Array.from({length: 10}, (_, i) => ({
+                id: 'salty_' + (i + 1), name: i === 0 ? 'كرواسون الأجبان والتركي' : `موالح شهية ${i + 1}`,
+                img: 'mm.png', desc: 'كرواسون هشة محشوة بجبن الشيدر والموزاريلا والتركي المدخن.',
+                calories: 250 + (i * 12), price: 75 + (i * 5)
+            }))
+        };
+
+        let currentData = {
+            siteTitle: 'مون كافيه',
+            textAbout: 'بدأ كافيه مون كافيه كفكرة جذابة لمعت في أذهان المؤسسين...',
+            textInside: 'استمتع بأجواء استثنائية وهادئة صُممت خصيصاً لتمنحك الراحة...',
+            taxText: 'جميع الأسعار بالجنيه المصري وتشمل الضريبة والخدمة',
+            slide1: 'صوره.png', slide2: 'صوره.png', slide3: 'صوره.png',
+            imgAbout: 'صوره.png', imgInside: 'صوره.png',
+            menu: defaultMenuData
+        };
+
+        // تسجيل الدخول
+        document.getElementById('login-btn').addEventListener('click', checkPassword);
+        document.getElementById('password-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkPassword(); });
+
+        async function checkPassword() {
+            let pass = document.getElementById('password-input').value;
+            if (pass === correctPassword) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                await loadCloudData();
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        }
+
+        async function loadCloudData() {
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    currentData = docSnap.data();
+                } else {
+                    await setDoc(docRef, currentData);
+                }
+                fillFormValues();
+                loadMenuEditors();
+            } catch (e) {
+                console.error("خطأ في جلب البيانات:", e);
+            }
+        }
+
+        function fillFormValues() {
+            document.getElementById('site-title-input').value = currentData.siteTitle || '';
+            document.getElementById('text-about-input').value = currentData.textAbout || '';
+            document.getElementById('text-inside-input').value = currentData.textInside || '';
+            document.getElementById('tax-text-input').value = currentData.taxText || '';
+
+            if (currentData.slide1) document.getElementById('prev_slide_1').src = currentData.slide1;
+            if (currentData.slide2) document.getElementById('prev_slide_2').src = currentData.slide2;
+            if (currentData.slide3) document.getElementById('prev_slide_3').src = currentData.slide3;
+        }
+
+        function loadMenuEditors() {
+            renderCategoryEditor('offers-editor', currentData.menu.offers, 'offers');
+            renderCategoryEditor('drinks-editor', currentData.menu.drinks, 'drinks');
+            renderCategoryEditor('sweets-editor', currentData.menu.sweets, 'sweets');
+            renderCategoryEditor('salty-editor', currentData.menu.salty, 'salty');
+        }
+
+        function renderCategoryEditor(containerId, items, categoryKey) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const box = document.createElement('div');
+                box.className = 'item-box';
+                box.innerHTML = `
+                    <img class="item-preview" id="prev_${categoryKey}_${index}" src="${item.img}" onerror="this.src='mm.png'">
+                    <label>اسم الصنف:</label>
+                    <input type="text" value="${item.name}" data-cat="${categoryKey}" data-idx="${index}" data-field="name" class="item-input">
+                    
+                    <label>السعر (ج.م):</label>
+                    <input type="number" value="${item.price}" data-cat="${categoryKey}" data-idx="${index}" data-field="price" class="item-input">
+                    
+                    <label>السعرات الحرارية:</label>
+                    <input type="number" value="${item.calories}" data-cat="${categoryKey}" data-idx="${index}" data-field="calories" class="item-input">
+                    
+                    <label>المكونات / التفاصيل:</label>
+                    <input type="text" value="${item.desc}" data-cat="${categoryKey}" data-idx="${index}" data-field="desc" class="item-input">
+                    
+                    <label>رفع صورة جديدة:</label>
+                    <input type="file" accept="image/*" class="item-img-input" data-cat="${categoryKey}" data-idx="${index}" data-prev="prev_${categoryKey}_${index}">
+                    
+                    <button class="btn-delete" data-cat="${categoryKey}" data-idx="${index}">🗑️ حذف الصنف</button>
+                `;
+                container.appendChild(box);
+            });
+
+            // إضافة الحوادث للتعديل الحسي
+            container.querySelectorAll('.item-input').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const { cat, idx, field } = e.target.dataset;
+                    currentData.menu[cat][idx][field] = e.target.value;
+                });
+            });
+
+            container.querySelectorAll('.item-img-input').forEach(inp => {
+                inp.addEventListener('change', (e) => {
+                    const { cat, idx, prev } = e.target.dataset;
+                    const file = e.target.files[0];
+                    if (file) {
+                        const r = new FileReader();
+                        r.onload = (ex) => {
+                            currentData.menu[cat][idx].img = ex.target.result;
+                            document.getElementById(prev).src = ex.target.result;
+                        };
+                        r.readAsDataURL(file);
+                    }
+                });
+            });
+
+            container.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const { cat, idx } = e.target.dataset;
+                    if (confirm("هل أنت متأكد من حذف هذا الصنف؟")) {
+                        currentData.menu[cat].splice(idx, 1);
+                        loadMenuEditors();
+                    }
+                });
+            });
+        }
+
+        // إضافة صنف جديد
+        document.getElementById('btn-add-item').addEventListener('click', () => {
+            const cat = document.getElementById('new-item-category').value;
+            const name = document.getElementById('new-item-name').value || 'صنف جديد';
+            const price = document.getElementById('new-item-price').value || 50;
+            const calories = document.getElementById('new-item-calories').value || 100;
+            const desc = document.getElementById('new-item-desc').value || 'مكونات وطازجة.';
+            const img = document.getElementById('new-item-img').value || 'mm.png';
+
+            currentData.menu[cat].unshift({
+                id: cat + '_' + Date.now(),
+                name, price, calories, desc, img
+            });
+
+            alert('تمت إضافة الصنف القائمة المحلية، اضغط حفظ للتأكيد على السحابة!');
+            loadMenuEditors();
+        });
+
+        // حفظ التغييرات إلى Firebase
+        document.getElementById('btn-save-all').addEventListener('click', async () => {
+            currentData.siteTitle = document.getElementById('site-title-input').value;
+            currentData.textAbout = document.getElementById('text-about-input').value;
+            currentData.textInside = document.getElementById('text-inside-input').value;
+            currentData.taxText = document.getElementById('tax-text-input').value;
+
+            // رفع صور المعرض
+            const handleFile = (fileId, keyName) => {
+                return new Promise((resolve) => {
+                    const f = document.getElementById(fileId).files[0];
+                    if (f) {
+                        const r = new FileReader();
+                        r.onload = (e) => { currentData[keyName] = e.target.result; resolve(); };
+                        r.readAsDataURL(f);
+                    } else { resolve(); }
+                });
+            };
+
+            await Promise.all([
+                handleFile('file-slide-1', 'slide1'),
+                handleFile('file-slide-2', 'slide2'),
+                handleFile('file-slide-3', 'slide3'),
+                handleFile('file-about', 'imgAbout'),
+                handleFile('file-inside', 'imgInside')
+            ]);
+
+            try {
+                await setDoc(docRef, currentData);
+                alert('✅ تم حفظ جميع التعديلات بنجاح على قاعدة البيانات السحابية (Firebase)!');
+            } catch (error) {
+                alert('حدث خطأ أثناء الحفظ: ' + error.message);
+            }
+        });
+
+        // إعادة ضبط
+        document.getElementById('btn-reset-all').addEventListener('click', async () => {
+            if (confirm("هل أنت متأكد من إعادة جميع الصور والنصوص والمنيو للوضع الافتراضي؟")) {
+                currentData.menu = defaultMenuData;
+                await setDoc(docRef, currentData);
+                fillFormValues();
+                loadMenuEditors();
+                alert("تمت إعادة ضبط كل شيء على السحابة.");
+            }
+        });
+    </script>
+</body>
+</html>

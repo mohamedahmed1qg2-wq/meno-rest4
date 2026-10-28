@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مطعم</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Lemonada:wght@300..700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="section">
+        <!-- شريط التنقل العلوي -->
+        <header class="head">
+            <h1 class="title" id="site-title-display">مطعم</h1>
+            <nav class="nav-links">
+                <a href="#offers">🔥 العروض</a>
+                <a href="#drinks">المشروبات</a>
+                <a href="#sweets">الحلويات</a>
+                <a href="#salty">الموالح</a>
+                <a href="#about">عن المطعم</a>
+                <a href="apps2meno.html" class="admin-link">⚙️ لوحة التحكم</a>
+            </nav>
+        </header>
+
+        <!-- قسم العروض المتحرك -->
+        <section class="menu-section">
+            <h2 class="section-title">عروض وأجواء المطعم</h2>
+            <div class="menu-container">
+                <div class="slideshow-container">
+                    <img id="slide-1" class="slide-img active" src="صوره.png" alt="عرض المحل الأول">
+                    <img id="slide-2" class="slide-img" src="صوره.png" alt="عرض المحل الثاني">
+                    <img id="slide-3" class="slide-img" src="صوره.png" alt="عرض المحل الثالث">
+                </div>
+            </div>
+        </section>
+
+        <!-- عن المطعم -->
+        <div id="about" class="content">
+            <img id="img-about" class="img1" src="صوره.png" alt="مطعم">
+            <p class="p1" id="text-about-display">
+                جاري تحميل البيانات...
+            </p>
+        </div>
+
+        <div class="content content-reverse">
+            <img id="img-inside" class="img1" src="صوره.png" alt="مطعم">
+            <p class="p1" id="text-inside-display">
+                جاري تحميل البيانات...
+            </p>
+        </div>
+
+        <!-- 0. قسم العروض والخصومات -->
+        <section id="offers" class="menu-section special-offers-section">
+            <h2 class="section-title">🔥 العروض والخصومات</h2>
+            <div class="products-grid" id="offers-container"></div>
+        </section>
+
+        <!-- 1. قسم المشروبات -->
+        <section id="drinks" class="menu-section">
+            <h2 class="section-title">المشروبات</h2>
+            <div class="products-grid" id="drinks-container"></div>
+        </section>
+
+        <!-- 2. قسم الحلويات -->
+        <section id="sweets" class="menu-section">
+            <h2 class="section-title">الحلويات</h2>
+            <div class="products-grid" id="sweets-container"></div>
+        </section>
+
+        <!-- 3. قسم الموالح -->
+        <section id="salty" class="menu-section">
+            <h2 class="section-title">الموالح</h2>
+            <div class="products-grid" id="salty-container"></div>
+        </section>
+
+        <!-- خانة الضريبة -->
+        <div class="tax-box">
+            <p id="tax-text-display">جميع الأسعار بالجنيه المصري وتشمل الضريبة والخدمة</p>
+        </div>
+    </div>
+
+    <!-- كود Firebase والربط المباشر -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAe-vReqTWawJRMv_XSNUFpQa6wUIQLGlg",
+            authDomain: "memo-rest.firebaseapp.com",
+            projectId: "memo-rest",
+            storageBucket: "memo-rest.firebasestorage.app",
+            messagingSenderId: "867489125406",
+            appId: "1:867489125406:web:df82cef80527ac70558a0f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // الاستماع للتغييرات في قاعدة البيانات لحظياً (Realtime)
+        onSnapshot(doc(db, "restaurant", "menuData"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+
+                // 1. تحديث النصوص
+                if (data.siteTitle) document.getElementById('site-title-display').innerText = data.siteTitle;
+                if (data.textAbout) document.getElementById('text-about-display').innerText = data.textAbout;
+                if (data.textInside) document.getElementById('text-inside-display').innerText = data.textInside;
+                if (data.taxText) document.getElementById('tax-text-display').innerText = data.taxText;
+
+                // 2. تحديث صور المعرض
+                if (data.slide1) document.getElementById('slide-1').src = data.slide1;
+                if (data.slide2) document.getElementById('slide-2').src = data.slide2;
+                if (data.slide3) document.getElementById('slide-3').src = data.slide3;
+                if (data.imgAbout) document.getElementById('img-about').src = data.imgAbout;
+                if (data.imgInside) document.getElementById('img-inside').src = data.imgInside;
+
+                // 3. عرض الأصناف
+                if (data.menu) {
+                    renderCategory('offers-container', data.menu.offers || []);
+                    renderCategory('drinks-container', data.menu.drinks || []);
+                    renderCategory('sweets-container', data.menu.sweets || []);
+                    renderCategory('salty-container', data.menu.salty || []);
+                }
+            }
+        });
+
+        function renderCategory(containerId, items) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'product-square-card';
+                card.innerHTML = `
+                    <div class="square-img-wrapper">
+                        <img class="square-img" src="${item.img}" alt="${item.name}" onerror="this.src='mm.png'">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">${item.name}</h3>
+                        <p class="product-desc"><strong>المكونات:</strong> ${item.desc}</p>
+                        <div class="product-details">
+                            <span class="product-calories">🔥 ${item.calories} كالوري</span>
+                            <span class="product-price">🏷️ ${item.price} ج.م</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // سلايد شو الصور
+        let currentSlide = 0;
+        const slides = [
+            document.getElementById('slide-1'),
+            document.getElementById('slide-2'),
+            document.getElementById('slide-3')
+        ];
+
+        setInterval(function() {
+            if (slides[currentSlide]) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
