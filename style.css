@@ -1,272 +1,510 @@
-/* ------------------ الأساسيات ------------------ */
-* {
-    font-family: "Lalezar", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    scroll-behavior: smooth;
-}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مطعم</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Lemonada:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+        /* ستايل زر السلة العائم ونافذة الطلب */
+        .cart-float-btn {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            background: #e6c594;
+            color: #2b1b17;
+            padding: 12px 22px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #2b1b17;
+        }
+        .cart-modal, .order-status-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .cart-content, .status-content {
+            background: #fff;
+            padding: 25px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            direction: rtl;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        .btn-add-to-cart {
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .btn-add-to-cart:hover { background: #219150; }
+        .checkout-input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: inherit;
+        }
 
-body {
-    background-color: #f7f3ee;
-    overflow-x: hidden;
-    width: 100%;
-}
+        /* ستايل العداد التنازلي وحالة الطلب */
+        .timer-circle {
+            font-size: 36px;
+            font-weight: bold;
+            color: #d35400;
+            margin: 15px 0;
+        }
+        .status-msg {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .status-success {
+            color: #27ae60;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .status-failed {
+            color: #c0392b;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
 
-.section {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 10px 15px;
-}
+    <div class="section">
+        <!-- شريط التنقل العلوي -->
+        <header class="head">
+            <h1 class="title" id="site-title-display">مطعم</h1>
+            <nav class="nav-links">
+                <a href="#offers">🔥 العروض</a>
+                <a href="#drinks">المشروبات</a>
+                <a href="#sweets">الحلويات</a>
+                <a href="#salty">الموالح</a>
+                <a href="#about">عن المطعم</a>
+                <a href="apps2meno.html" class="admin-link">⚙️ لوحة التحكم</a>
+            </nav>
+        </header>
 
-/* ------------------ شريط التنقل ------------------ */
-.head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #2b1b17;
-    padding: 15px 4%;
-    flex-wrap: wrap;
-    gap: 15px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    border-radius: 0 0 15px 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-}
+        <!-- زر السلة العائم -->
+        <div class="cart-float-btn" id="open-cart-btn">
+            🛒 سلة الطلبات (<span id="cart-count">0</span>)
+        </div>
 
-.title {
-    font-size: clamp(26px, 4vw, 34px);
-    color: #e6c594;
-    letter-spacing: 1px;
-}
+        <!-- قسم العروض المتحرك -->
+        <section class="menu-section">
+            <h2 class="section-title">عروض وأجواء المطعم</h2>
+            <div class="menu-container">
+                <div class="slideshow-container">
+                    <img id="slide-1" class="slide-img active" src="صوره.png" alt="عرض المحل الأول">
+                    <img id="slide-2" class="slide-img" src="صوره.png" alt="عرض المحل الثاني">
+                    <img id="slide-3" class="slide-img" src="صوره.png" alt="عرض المحل الثالث">
+                </div>
+            </div>
+        </section>
 
-.nav-links {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-}
+        <!-- عن المطعم -->
+        <div id="about" class="content">
+            <img id="img-about" class="img1" src="صوره.png" alt="مطعم">
+            <p class="p1" id="text-about-display">
+                جاري تحميل البيانات...
+            </p>
+        </div>
 
-.head a {
-    color: #f7f3ee;
-    text-decoration: none;
-    font-size: clamp(15px, 2vw, 18px);
-    transition: color 0.3s, transform 0.2s;
-}
+        <div class="content content-reverse">
+            <img id="img-inside" class="img1" src="صوره.png" alt="مطعم">
+            <p class="p1" id="text-inside-display">
+                جاري تحميل البيانات...
+            </p>
+        </div>
 
-.head a:hover {
-    color: #e6c594;
-    transform: translateY(-2px);
-}
+        <!-- 0. قسم العروض والخصومات -->
+        <section id="offers" class="menu-section special-offers-section">
+            <h2 class="section-title">🔥 العروض والخصومات</h2>
+            <div class="products-grid" id="offers-container"></div>
+        </section>
 
-.admin-link {
-    background: #e6c594;
-    color: #2b1b17 !important;
-    padding: 2px 10px;
-    border-radius: 8px;
-}
+        <!-- قسم المشروبات -->
+        <section id="drinks" class="menu-section">
+            <h2 class="section-title">المشروبات</h2>
+            <div class="products-grid" id="drinks-container"></div>
+        </section>
 
-/* ------------------ ألبوم الصور المتحرك ------------------ */
-.slideshow-container {
-    position: relative;
-    width: 100%;
-    margin: 10px auto;
-    text-align: center;
-}
+        <!-- 2. قسم الحلويات -->
+        <section id="sweets" class="menu-section">
+            <h2 class="section-title">الحلويات</h2>
+            <div class="products-grid" id="sweets-container"></div>
+        </section>
 
-.slide-img {
-    width: 100%;
-    max-height: 380px;
-    object-fit: cover;
-    border-radius: 12px;
-    display: none;
-    transition: opacity 0.5s ease-in-out;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
+        <!-- 3. قسم الموالح -->
+        <section id="salty" class="menu-section">
+            <h2 class="section-title">الموالح</h2>
+            <div class="products-grid" id="salty-container"></div>
+        </section>
 
-.slide-img.active {
-    display: block;
-}
+        <!-- خانة الضريبة -->
+        <div class="tax-box">
+            <p id="tax-text-display">جميع الأسعار بالجنيه المصري وتشمل الضريبة والخدمة</p>
+        </div>
+    </div>
 
-/* ------------------ المحتوى الرئيسي ------------------ */
-.content {
-    width: 100%;
-    margin: 25px auto;
-    background-color: rgba(43, 27, 23, 0.9);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(230, 197, 148, 0.3);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 25px;
-    gap: 25px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
+    <!-- نافذة السلة وإتمام الطلب -->
+    <div class="cart-modal" id="cart-modal">
+        <div class="cart-content">
+            <h2 style="color:#2b1b17; margin-bottom:15px; text-align:center;">سلة المشتريات</h2>
+            <div id="cart-items-list" style="margin-bottom: 15px;"></div>
+            <h3 id="cart-total" style="text-align: left; margin-bottom: 15px; color:#27ae60;">الإجمالي: 0 ج.م</h3>
+            
+            <div id="checkout-form" style="display:none; border-top: 2px dashed #ddd; padding-top: 15px;">
+                <h3 style="color:#2b1b17; font-size:16px; margin-bottom:10px;">بيانات العميل (الدفع عند الاستلام)</h3>
+                <input type="text" id="cust-name" class="checkout-input" placeholder="الاسم ثلاثي على الأقل">
+                <input type="tel" id="cust-phone" class="checkout-input" placeholder="رقم الهاتف (11 رقم)">
+                <textarea id="cust-address" class="checkout-input" placeholder="العنوان التفصيلي (4 كلمات على الأقل)"></textarea>
+                <textarea id="cust-notes" class="checkout-input" placeholder="ملاحظات عامة على الطلب (اختياري)"></textarea>
+                <button id="submit-order-btn" style="background:#27ae60; color:white; border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit;">تأكيد وإرسال الطلب</button>
+            </div>
 
-.content-reverse {
-    flex-direction: row-reverse;
-}
+            <button id="proceed-checkout-btn" style="background:#2980b9; color:white; border:none; padding:10px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; margin-top:10px;">إتمام الطلب</button>
+            <button id="close-cart-btn" style="background:#c0392b; color:white; border:none; padding:8px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; margin-top:8px;">إغلاق</button>
+        </div>
+    </div>
 
-.img1 {
-    width: 100%;
-    max-width: 380px;
-    height: 240px;
-    border-radius: 15px;
-    object-fit: cover;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
+    <!-- ⏳ نافذة حالة الطلب والعداد التنازلي -->
+    <div class="order-status-modal" id="status-modal">
+        <div class="status-content">
+            <h2 id="status-title" style="color:#2b1b17;">جاري مراجعة طلبك...</h2>
+            
+            <!-- العداد التنازلي -->
+            <div id="timer-box">
+                <p class="status-msg">يرجى الانتظار، جاري تأكيد طلبك من إدارة المطعم خلال دقيقة:</p>
+                <div class="timer-circle" id="timer-count">60</div>
+            </div>
 
-.p1 {
-    flex: 1;
-    color: #f7f3ee;
-    font-size: clamp(16px, 2.2vw, 19px);
-    line-height: 1.8;
-    text-align: justify;
-}
+            <!-- الرسالة الديناميكية عند القبول أو الانتهاء -->
+            <div id="status-result" style="display: none;"></div>
 
-/* ------------------ شبكة الأصناف المربعة ------------------ */
-.menu-section {
-    width: 100%;
-    margin: 35px auto;
-    background-color: rgba(58, 38, 32, 0.9);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(230, 197, 148, 0.3);
-    border-radius: 20px;
-    padding: 25px 15px;
-    text-align: center;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
+            <button id="retry-order-btn" style="display:none; background:#2980b9; color:white; border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; margin-top:15px;">إرسال طلب جديد 🔄</button>
+            <button id="close-status-btn" style="display:none; background:#27ae60; color:white; border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; margin-top:15px;">حسناً، فهمت 👍</button>
+        </div>
+    </div>
 
-/* تمييز قسم العروض بصرياً */
-.special-offers-section {
-    border: 2px solid #e74c3c;
-    background-color: rgba(74, 28, 28, 0.95);
-}
+    <!-- كود Firebase والمنطق البرمجي مع العداد التنازلي والمتابعة الحية -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-.special-offers-section .section-title {
-    color: #ff6b6b;
-    border-bottom-color: #e74c3c;
-}
+        const firebaseConfig = {
+            apiKey: "AIzaSyAe-vReqTWawJRMv_XSNUFpQa6wUIQLGlg",
+            authDomain: "memo-rest.firebaseapp.com",
+            projectId: "memo-rest",
+            storageBucket: "memo-rest.firebasestorage.app",
+            messagingSenderId: "867489125406",
+            appId: "1:867489125406:web:df82cef80527ac70558a0f"
+        };
 
-.section-title {
-    color: #e6c594;
-    font-size: clamp(26px, 3.5vw, 34px);
-    margin-bottom: 25px;
-    border-bottom: 2px solid rgba(230, 197, 148, 0.3);
-    padding-bottom: 10px;
-    display: inline-block;
-    padding-left: 20px;
-    padding-right: 20px;
-}
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    width: 100%;
-    justify-items: center;
-}
+        let cart = [];
+        let timerInterval = null;
+        let unsubscribeOrderStatus = null;
 
-.product-square-card {
-    background-color: rgba(43, 27, 23, 0.95);
-    border: 1px solid rgba(230, 197, 148, 0.4);
-    border-radius: 16px;
-    width: 100%;
-    max-width: 270px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+        // الاستماع للتغييرات في قائمة المنيو لحظياً
+        onSnapshot(doc(db, "restaurant", "menuData"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.siteTitle) document.getElementById('site-title-display').innerText = data.siteTitle;
+                if (data.textAbout) document.getElementById('text-about-display').innerText = data.textAbout;
+                if (data.textInside) document.getElementById('text-inside-display').innerText = data.textInside;
+                if (data.taxText) document.getElementById('tax-text-display').innerText = data.taxText;
 
-.product-square-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 22px rgba(230, 197, 148, 0.25);
-}
+                if (data.slide1) document.getElementById('slide-1').src = data.slide1;
+                if (data.slide2) document.getElementById('slide-2').src = data.slide2;
+                if (data.slide3) document.getElementById('slide-3').src = data.slide3;
+                if (data.imgAbout) document.getElementById('img-about').src = data.imgAbout;
+                if (data.imgInside) document.getElementById('img-inside').src = data.imgInside;
 
-.square-img-wrapper {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-}
+                if (data.menu) {
+                    renderCategory('offers-container', data.menu.offers || []);
+                    renderCategory('drinks-container', data.menu.drinks || []);
+                    renderCategory('sweets-container', data.menu.sweets || []);
+                    renderCategory('salty-container', data.menu.salty || []);
+                }
+            }
+        });
 
-.square-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
+        function renderCategory(containerId, items) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
 
-.product-square-card:hover .square-img {
-    transform: scale(1.06);
-}
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'product-square-card';
+                card.innerHTML = `
+                    <div class="square-img-wrapper">
+                        <img class="square-img" src="${item.img}" alt="${item.name}" onerror="this.src='mm.png'">
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">${item.name}</h3>
+                        <p class="product-desc"><strong>المكونات:</strong> ${item.desc}</p>
+                        <div class="product-details">
+                            <span class="product-calories">🔥 ${item.calories} كالوري</span>
+                            <span class="product-price">🏷️ ${item.price} ج.م</span>
+                        </div>
+                        <button class="btn-add-to-cart" data-name="${item.name}" data-price="${item.price}">أضف للسلة</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
 
-.product-info {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+            container.querySelectorAll('.btn-add-to-cart').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const name = e.target.dataset.name;
+                    const price = parseFloat(e.target.dataset.price);
+                    addToCart(name, price);
+                });
+            });
+        }
 
-.product-title {
-    color: #e6c594;
-    font-size: 18px;
-    margin-bottom: 2px;
-}
+        function addToCart(name, price) {
+            const existing = cart.find(i => i.name === name);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ name, price, qty: 1 });
+            }
+            updateCartUI();
+        }
 
-.product-desc {
-    color: #f7f3ee;
-    font-size: 13px;
-    line-height: 1.4;
-    font-family: sans-serif;
-    height: 44px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.reduce((sum, i) => sum + i.qty, 0);
+            const list = document.getElementById('cart-items-list');
+            list.innerHTML = '';
+            let total = 0;
 
-.product-details {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px dashed rgba(230, 197, 148, 0.3);
-    font-family: sans-serif;
-}
+            if (cart.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#777;">السلة فارغة حالياً</p>';
+            } else {
+                cart.forEach((item, index) => {
+                    total += item.price * item.qty;
+                    const div = document.createElement('div');
+                    div.className = 'cart-item';
+                    div.innerHTML = `
+                        <span>${item.name} (×${item.qty})</span>
+                        <span>${item.price * item.qty} ج.م</span>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+            document.getElementById('cart-total').innerText = `الإجمالي: ${total} ج.م`;
+        }
 
-.product-calories {
-    color: #ff9f43;
-    font-size: 13px;
-    font-weight: bold;
-}
+        // تفاعل السلة والنافذة
+        document.getElementById('open-cart-btn').addEventListener('click', () => {
+            document.getElementById('cart-modal').style.display = 'flex';
+            updateCartUI();
+        });
 
-.product-price {
-    color: #2ecc71;
-    font-size: 16px;
-    font-weight: bold;
-}
+        document.getElementById('close-cart-btn').addEventListener('click', () => {
+            document.getElementById('cart-modal').style.display = 'none';
+        });
 
-.tax-box {
-    width: 100%;
-    margin: 35px auto 40px auto;
-    background-color: #2b1b17;
-    border: 1px solid rgba(230, 197, 148, 0.4);
-    border-radius: 12px;
-    padding: 15px;
-    text-align: center;
-}
+        document.getElementById('proceed-checkout-btn').addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert('سلة المشتريات فارغة!');
+                return;
+            }
+            document.getElementById('checkout-form').style.display = 'block';
+            document.getElementById('proceed-checkout-btn').style.display = 'none';
+        });
 
-.tax-box p {
-    color: #e6c594;
-    font-size: 16px;
-}
+        // إرسال الطلب وتشغيل نظام العداد والتأكيد الحظي
+        document.getElementById('submit-order-btn').addEventListener('click', async () => {
+            const name = document.getElementById('cust-name').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            const address = document.getElementById('cust-address').value.trim();
+            const notes = document.getElementById('cust-notes').value.trim();
+
+            const nameWords = name.split(/\s+/).filter(Boolean);
+            if (nameWords.length < 3) {
+                alert('الرجاء إدخال الاسم كاملاً (ثلاثي على الأقل).');
+                return;
+            }
+
+            const phoneRegex = /^\d{11}$/;
+            if (!phoneRegex.test(phone)) {
+                alert('الرجاء إدخال رقم هاتف صحيح يتكون من 11 رقماً.');
+                return;
+            }
+
+            const addressWords = address.split(/\s+/).filter(Boolean);
+            if (addressWords.length < 4) {
+                alert('الرجاء كتابة عنوان تفصيلي يتكون من 4 كلمات على الأقل.');
+                return;
+            }
+
+            const orderData = {
+                customerName: name,
+                customerPhone: phone,
+                customerAddress: address,
+                customerNotes: notes,
+                items: cart,
+                totalAmount: cart.reduce((sum, i) => sum + (i.price * i.qty), 0),
+                paymentMethod: 'الدفع عند الاستلام',
+                status: 'قيد المراجعة',
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                // إرسال الطلب لـ Firestore والحصول على ID الطلب
+                const docRef = await addDoc(collection(db, "orders"), orderData);
+                const orderId = docRef.id;
+
+                // إغلاق السلة وافتتاح شاشة العداد التنازلي
+                document.getElementById('cart-modal').style.display = 'none';
+                startOrderTracking(orderId);
+
+            } catch (error) {
+                alert('حدث خطأ أثناء إرسال الطلب: ' + error.message);
+            }
+        });
+
+        // ⏱️ دالة تشغيل العداد ومراقبة موافقة الأدمن
+        function startOrderTracking(orderId) {
+            const statusModal = document.getElementById('status-modal');
+            const timerBox = document.getElementById('timer-box');
+            const timerCount = document.getElementById('timer-count');
+            const statusTitle = document.getElementById('status-title');
+            const statusResult = document.getElementById('status-result');
+            const retryBtn = document.getElementById('retry-order-btn');
+            const closeBtn = document.getElementById('close-status-btn');
+
+            statusModal.style.display = 'flex';
+            timerBox.style.display = 'block';
+            statusResult.style.display = 'none';
+            retryBtn.style.display = 'none';
+            closeBtn.style.display = 'none';
+            statusTitle.innerText = "جاري مراجعة طلبك...";
+
+            let timeLeft = 60;
+            timerCount.innerText = timeLeft;
+
+            // تشغيل العداد التنازلي (دقيقة واحدة)
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerCount.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (unsubscribeOrderStatus) unsubscribeOrderStatus();
+                    showTimeoutState();
+                }
+            }, 1000);
+
+            // الاستماع للحالة من Firebase فوراً
+            unsubscribeOrderStatus = onSnapshot(doc(db, "orders", orderId), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.status === 'تمت الموافقة') {
+                        clearInterval(timerInterval);
+                        if (unsubscribeOrderStatus) unsubscribeOrderStatus();
+                        showSuccessState();
+                    }
+                }
+            });
+        }
+
+        // حالة نجاح القبول من الإدارة
+        function showSuccessState() {
+            document.getElementById('timer-box').style.display = 'none';
+            document.getElementById('status-title').innerText = "تمت الموافقة على طلبك! 🎉";
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <p class="status-success">المطعم بدأ في تحضير المنيو الخاص بك الآن!</p>
+                <p class="status-msg" style="margin-top:10px;">طلبك في الطريق إليك وسيتواصل معك موظف التوصيل قريباً جداً. شكراً لاختيارك مطعمنا! 🛵💨</p>
+            `;
+            document.getElementById('close-status-btn').style.display = 'block';
+
+            // تفريغ البيانات
+            cart = [];
+            updateCartUI();
+            document.getElementById('checkout-form').style.display = 'none';
+            document.getElementById('proceed-checkout-btn').style.display = 'block';
+        }
+
+        // حالة انتهاء الدقيقة دون موافقة
+        function showTimeoutState() {
+            document.getElementById('timer-box').style.display = 'none';
+            document.getElementById('status-title').innerText = "عذراً، لم يتم القبول بعد ⏳";
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <p class="status-failed">يبدو أن المطعم مشغول حالياً ولم يتم إقرار الطلب خلال دقيقة.</p>
+                <p class="status-msg">يمكنك الضغط على زر إعادة المحاولة لإرسال طلب جديد، أو إعادة المحاولة لاحقاً.</p>
+            `;
+            document.getElementById('retry-order-btn').style.display = 'block';
+        }
+
+        // إعادة إرسال طلب جديد عند التايم أوت
+        document.getElementById('retry-order-btn').addEventListener('click', () => {
+            document.getElementById('status-modal').style.display = 'none';
+            document.getElementById('cart-modal').style.display = 'flex';
+        });
+
+        document.getElementById('close-status-btn').addEventListener('click', () => {
+            document.getElementById('status-modal').style.display = 'none';
+        });
+
+        // سلايد شو الصور
+        let currentSlide = 0;
+        const slides = [
+            document.getElementById('slide-1'),
+            document.getElementById('slide-2'),
+            document.getElementById('slide-3')
+        ];
+
+        setInterval(function() {
+            if (slides[currentSlide]) {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
