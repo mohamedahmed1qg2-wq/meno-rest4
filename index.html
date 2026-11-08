@@ -8,6 +8,100 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Lemonada:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+        /* ستايل زر السلة العائم ونافذة الطلب */
+        .cart-float-btn {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            background: #e6c594;
+            color: #2b1b17;
+            padding: 12px 22px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #2b1b17;
+        }
+        .cart-modal, .order-status-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .cart-content, .status-content {
+            background: #fff;
+            padding: 25px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            direction: rtl;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        .btn-add-to-cart {
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .btn-add-to-cart:hover { background: #219150; }
+        .checkout-input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        /* ستايل العداد التنازلي وحالة الطلب */
+        .timer-circle {
+            font-size: 36px;
+            font-weight: bold;
+            color: #d35400;
+            margin: 15px 0;
+        }
+        .status-msg {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .status-success {
+            color: #27ae60;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .status-failed {
+            color: #c0392b;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
@@ -24,6 +118,11 @@
                 <a href="apps2meno.html" class="admin-link">⚙️ لوحة التحكم</a>
             </nav>
         </header>
+
+        <!-- زر السلة العائم -->
+        <div class="cart-float-btn" id="open-cart-btn">
+            🛒 سلة الطلبات (<span id="cart-count">0</span>)
+        </div>
 
         <!-- قسم العروض المتحرك -->
         <section class="menu-section">
@@ -58,7 +157,7 @@
             <div class="products-grid" id="offers-container"></div>
         </section>
 
-        <!-- 1. قسم المشروبات -->
+        <!-- قسم المشروبات -->
         <section id="drinks" class="menu-section">
             <h2 class="section-title">المشروبات</h2>
             <div class="products-grid" id="drinks-container"></div>
@@ -82,10 +181,50 @@
         </div>
     </div>
 
-    <!-- كود Firebase والربط المباشر -->
+    <!-- نافذة السلة وإتمام الطلب -->
+    <div class="cart-modal" id="cart-modal">
+        <div class="cart-content">
+            <h2 style="color:#2b1b17; margin-bottom:15px; text-align:center;">سلة المشتريات</h2>
+            <div id="cart-items-list" style="margin-bottom: 15px;"></div>
+            <h3 id="cart-total" style="text-align: left; margin-bottom: 15px; color:#27ae60;">الإجمالي: 0 ج.م</h3>
+            
+            <div id="checkout-form" style="display:none; border-top: 2px dashed #ddd; padding-top: 15px;">
+                <h3 style="color:#2b1b17; font-size:16px; margin-bottom:10px;">بيانات العميل (الدفع عند الاستلام)</h3>
+                <input type="text" id="cust-name" class="checkout-input" placeholder="الاسم ثلاثي على الأقل">
+                <input type="tel" id="cust-phone" class="checkout-input" placeholder="رقم الهاتف (11 رقم)">
+                <textarea id="cust-address" class="checkout-input" placeholder="العنوان التفصيلي (4 كلمات على الأقل)"></textarea>
+                <textarea id="cust-notes" class="checkout-input" placeholder="ملاحظات عامة على الطلب (اختياري)"></textarea>
+                <button id="submit-order-btn" style="background:#27ae60; color:white; border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit;">تأكيد وإرسال الطلب</button>
+            </div>
+
+            <button id="proceed-checkout-btn" style="background:#2980b9; color:white; border:none; padding:10px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; margin-top:10px;">إتمام الطلب</button>
+            <button id="close-cart-btn" style="background:#c0392b; color:white; border:none; padding:8px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; margin-top:8px;">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- ⏳ نافذة حالة الطلب والعداد التنازلي -->
+    <div class="order-status-modal" id="status-modal">
+        <div class="status-content">
+            <h2 id="status-title" style="color:#2b1b17;">جاري مراجعة طلبك...</h2>
+            
+            <!-- العداد التنازلي -->
+            <div id="timer-box">
+                <p class="status-msg">يرجى الانتظار، جاري تأكيد طلبك من إدارة المطعم خلال دقيقة:</p>
+                <div class="timer-circle" id="timer-count">60</div>
+            </div>
+
+            <!-- الرسالة الديناميكية عند القبول أو الانتهاء -->
+            <div id="status-result" style="display: none;"></div>
+
+            <button id="retry-order-btn" style="display:none; background:#2980b9; color:white; border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; margin-top:15px;">إرسال طلب جديد 🔄</button>
+            <button id="close-status-btn" style="display:none; background:#27ae60; color:white; border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; font-family:inherit; margin-top:15px;">حسناً، فهمت 👍</button>
+        </div>
+    </div>
+
+    <!-- كود Firebase والمنطق البرمجي مع العداد التنازلي والمتابعة الحية -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAe-vReqTWawJRMv_XSNUFpQa6wUIQLGlg",
@@ -99,25 +238,25 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // الاستماع للتغييرات في قاعدة البيانات لحظياً (Realtime)
+        let cart = [];
+        let timerInterval = null;
+        let unsubscribeOrderStatus = null;
+
+        // الاستماع للتغييرات في قائمة المنيو لحظياً
         onSnapshot(doc(db, "restaurant", "menuData"), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-
-                // 1. تحديث النصوص
                 if (data.siteTitle) document.getElementById('site-title-display').innerText = data.siteTitle;
                 if (data.textAbout) document.getElementById('text-about-display').innerText = data.textAbout;
                 if (data.textInside) document.getElementById('text-inside-display').innerText = data.textInside;
                 if (data.taxText) document.getElementById('tax-text-display').innerText = data.taxText;
 
-                // 2. تحديث صور المعرض
                 if (data.slide1) document.getElementById('slide-1').src = data.slide1;
                 if (data.slide2) document.getElementById('slide-2').src = data.slide2;
                 if (data.slide3) document.getElementById('slide-3').src = data.slide3;
                 if (data.imgAbout) document.getElementById('img-about').src = data.imgAbout;
                 if (data.imgInside) document.getElementById('img-inside').src = data.imgInside;
 
-                // 3. عرض الأصناف
                 if (data.menu) {
                     renderCategory('offers-container', data.menu.offers || []);
                     renderCategory('drinks-container', data.menu.drinks || []);
@@ -146,11 +285,210 @@
                             <span class="product-calories">🔥 ${item.calories} كالوري</span>
                             <span class="product-price">🏷️ ${item.price} ج.م</span>
                         </div>
+                        <button class="btn-add-to-cart" data-name="${item.name}" data-price="${item.price}">أضف للسلة</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
+
+            container.querySelectorAll('.btn-add-to-cart').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const name = e.target.dataset.name;
+                    const price = parseFloat(e.target.dataset.price);
+                    addToCart(name, price);
+                });
+            });
         }
+
+        function addToCart(name, price) {
+            const existing = cart.find(i => i.name === name);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ name, price, qty: 1 });
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.reduce((sum, i) => sum + i.qty, 0);
+            const list = document.getElementById('cart-items-list');
+            list.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#777;">السلة فارغة حالياً</p>';
+            } else {
+                cart.forEach((item, index) => {
+                    total += item.price * item.qty;
+                    const div = document.createElement('div');
+                    div.className = 'cart-item';
+                    div.innerHTML = `
+                        <span>${item.name} (×${item.qty})</span>
+                        <span>${item.price * item.qty} ج.م</span>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+            document.getElementById('cart-total').innerText = `الإجمالي: ${total} ج.م`;
+        }
+
+        // تفاعل السلة والنافذة
+        document.getElementById('open-cart-btn').addEventListener('click', () => {
+            document.getElementById('cart-modal').style.display = 'flex';
+            updateCartUI();
+        });
+
+        document.getElementById('close-cart-btn').addEventListener('click', () => {
+            document.getElementById('cart-modal').style.display = 'none';
+        });
+
+        document.getElementById('proceed-checkout-btn').addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert('سلة المشتريات فارغة!');
+                return;
+            }
+            document.getElementById('checkout-form').style.display = 'block';
+            document.getElementById('proceed-checkout-btn').style.display = 'none';
+        });
+
+        // إرسال الطلب وتشغيل نظام العداد والتأكيد الحظي
+        document.getElementById('submit-order-btn').addEventListener('click', async () => {
+            const name = document.getElementById('cust-name').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            const address = document.getElementById('cust-address').value.trim();
+            const notes = document.getElementById('cust-notes').value.trim();
+
+            const nameWords = name.split(/\s+/).filter(Boolean);
+            if (nameWords.length < 3) {
+                alert('الرجاء إدخال الاسم كاملاً (ثلاثي على الأقل).');
+                return;
+            }
+
+            const phoneRegex = /^\d{11}$/;
+            if (!phoneRegex.test(phone)) {
+                alert('الرجاء إدخال رقم هاتف صحيح يتكون من 11 رقماً.');
+                return;
+            }
+
+            const addressWords = address.split(/\s+/).filter(Boolean);
+            if (addressWords.length < 4) {
+                alert('الرجاء كتابة عنوان تفصيلي يتكون من 4 كلمات على الأقل.');
+                return;
+            }
+
+            const orderData = {
+                customerName: name,
+                customerPhone: phone,
+                customerAddress: address,
+                customerNotes: notes,
+                items: cart,
+                totalAmount: cart.reduce((sum, i) => sum + (i.price * i.qty), 0),
+                paymentMethod: 'الدفع عند الاستلام',
+                status: 'قيد المراجعة',
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                // إرسال الطلب لـ Firestore والحصول على ID الطلب
+                const docRef = await addDoc(collection(db, "orders"), orderData);
+                const orderId = docRef.id;
+
+                // إغلاق السلة وافتتاح شاشة العداد التنازلي
+                document.getElementById('cart-modal').style.display = 'none';
+                startOrderTracking(orderId);
+
+            } catch (error) {
+                alert('حدث خطأ أثناء إرسال الطلب: ' + error.message);
+            }
+        });
+
+        // ⏱️ دالة تشغيل العداد ومراقبة موافقة الأدمن
+        function startOrderTracking(orderId) {
+            const statusModal = document.getElementById('status-modal');
+            const timerBox = document.getElementById('timer-box');
+            const timerCount = document.getElementById('timer-count');
+            const statusTitle = document.getElementById('status-title');
+            const statusResult = document.getElementById('status-result');
+            const retryBtn = document.getElementById('retry-order-btn');
+            const closeBtn = document.getElementById('close-status-btn');
+
+            statusModal.style.display = 'flex';
+            timerBox.style.display = 'block';
+            statusResult.style.display = 'none';
+            retryBtn.style.display = 'none';
+            closeBtn.style.display = 'none';
+            statusTitle.innerText = "جاري مراجعة طلبك...";
+
+            let timeLeft = 60;
+            timerCount.innerText = timeLeft;
+
+            // تشغيل العداد التنازلي (دقيقة واحدة)
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerCount.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (unsubscribeOrderStatus) unsubscribeOrderStatus();
+                    showTimeoutState();
+                }
+            }, 1000);
+
+            // الاستماع للحالة من Firebase فوراً
+            unsubscribeOrderStatus = onSnapshot(doc(db, "orders", orderId), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.status === 'تمت الموافقة') {
+                        clearInterval(timerInterval);
+                        if (unsubscribeOrderStatus) unsubscribeOrderStatus();
+                        showSuccessState();
+                    }
+                }
+            });
+        }
+
+        // حالة نجاح القبول من الإدارة
+        function showSuccessState() {
+            document.getElementById('timer-box').style.display = 'none';
+            document.getElementById('status-title').innerText = "تمت الموافقة على طلبك! 🎉";
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <p class="status-success">المطعم بدأ في تحضير المنيو الخاص بك الآن!</p>
+                <p class="status-msg" style="margin-top:10px;">طلبك في الطريق إليك وسيتواصل معك موظف التوصيل قريباً جداً. شكراً لاختيارك مطعمنا! 🛵💨</p>
+            `;
+            document.getElementById('close-status-btn').style.display = 'block';
+
+            // تفريغ البيانات
+            cart = [];
+            updateCartUI();
+            document.getElementById('checkout-form').style.display = 'none';
+            document.getElementById('proceed-checkout-btn').style.display = 'block';
+        }
+
+        // حالة انتهاء الدقيقة دون موافقة
+        function showTimeoutState() {
+            document.getElementById('timer-box').style.display = 'none';
+            document.getElementById('status-title').innerText = "عذراً، لم يتم القبول بعد ⏳";
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <p class="status-failed">يبدو أن المطعم مشغول حالياً ولم يتم إقرار الطلب خلال دقيقة.</p>
+                <p class="status-msg">يمكنك الضغط على زر إعادة المحاولة لإرسال طلب جديد، أو إعادة المحاولة لاحقاً.</p>
+            `;
+            document.getElementById('retry-order-btn').style.display = 'block';
+        }
+
+        // إعادة إرسال طلب جديد عند التايم أوت
+        document.getElementById('retry-order-btn').addEventListener('click', () => {
+            document.getElementById('status-modal').style.display = 'none';
+            document.getElementById('cart-modal').style.display = 'flex';
+        });
+
+        document.getElementById('close-status-btn').addEventListener('click', () => {
+            document.getElementById('status-modal').style.display = 'none';
+        });
 
         // سلايد شو الصور
         let currentSlide = 0;
