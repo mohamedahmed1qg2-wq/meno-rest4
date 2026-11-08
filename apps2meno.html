@@ -30,6 +30,16 @@
         .slide-preview-box { text-align: center; background: #fdfbf7; padding: 10px; border-radius: 8px; border: 1px solid #e6c594; }
         .slide-preview-box img { width: 100%; height: 90px; object-fit: cover; border-radius: 6px; margin-bottom: 5px; }
 
+        /* ستايل بطاقات الطلبات الواردة */
+        .order-card { background: #fffdf9; border: 2px solid #2980b9; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        .order-header { display: flex; justify-content: space-between; font-weight: bold; color: #2b1b17; margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .order-details { font-size: 14px; color: #444; line-height: 1.6; }
+        .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; color: white; }
+        .status-pending { background: #e67e22; }
+        .status-approved { background: #27ae60; }
+        .btn-approve { background: #27ae60; padding: 6px 12px; font-size: 14px; margin-top: 8px; width: auto; }
+        .btn-remove-order { background: #c0392b; padding: 6px 12px; font-size: 14px; margin-top: 8px; width: auto; }
+
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(43, 27, 23, 0.85); display: flex; justify-content: center; align-items: center; z-index: 9999;
@@ -54,7 +64,15 @@
     <!-- لوحة التحكم -->
     <div id="admin-panel">
         <a href="index.html">← العودة إلى المنيو الرئيسي</a>
-        <h1 style="color: #2b1b17; font-size: 24px; text-align: center; margin-bottom: 20px;">لوحة التحكم الشاملة (Firebase)</h1>
+        <h1 style="color: #2b1b17; font-size: 24px; text-align: center; margin-bottom: 20px;">لوحة التحكم الشاملة (مطعم عمرو ربيع)</h1>
+
+        <!-- 📦 قسم الطلبات الواردة وإدارتها -->
+        <div class="card" style="border: 2px solid #27ae60; background: #f4fcf7;">
+            <h2>🛎️ الطلبات الواردة من العملاء (الدفع عند الاستلام)</h2>
+            <div id="orders-container" style="margin-top: 15px;">
+                <p style="text-align: center; color: #666;">جاري تحميل الطلبات...</p>
+            </div>
+        </div>
 
         <!-- قسم صور السلايد شو -->
         <div class="card" style="border: 2px solid #e6c594; background: #fffdf9;">
@@ -82,17 +100,17 @@
         <div class="card">
             <h2>📝 تعديل نصوص وصور قسم "عن المطعم" والأجواء</h2>
             <label>اسم المطعم/ العنوان الرئيسي:</label>
-            <input type="text" id="site-title-input" placeholder="مثال: مون كافيه">
+            <input type="text" id="site-title-input" placeholder="مثال: مطعم عمرو ربيع">
 
             <div style="margin-top: 15px;">
-                <label>نص قسم "عن مون كافيه":</label>
+                <label>نص قسم "عن المطعم":</label>
                 <textarea id="text-about-input"></textarea>
-                <label>تغيير صورة "عن الكافيه":</label>
+                <label>تغيير صورة "عن المطعم":</label>
                 <input type="file" id="file-about" accept="image/*">
             </div>
 
             <div style="margin-top: 15px;">
-                <label>نص الخانة الإضافية (أجواء الكافيه):</label>
+                <label>نص الخانة الإضافية (أجواء المطعم):</label>
                 <textarea id="text-inside-input"></textarea>
                 <label>تغيير صورة الخانة الإضافية:</label>
                 <input type="file" id="file-inside" accept="image/*">
@@ -165,10 +183,10 @@
         </div>
     </div>
 
-    <!-- كود JavaScript مع Firebase SDK -->
+    <!-- كود JavaScript لوحة التحكم وإدارة الطلبات -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAe-vReqTWawJRMv_XSNUFpQa6wUIQLGlg",
@@ -208,8 +226,8 @@
         };
 
         let currentData = {
-            siteTitle: 'مون كافيه',
-            textAbout: 'بدأ كافيه مون كافيه كفكرة جذابة لمعت في أذهان المؤسسين...',
+            siteTitle: 'مطعم عمرو ربيع',
+            textAbout: 'بدأ مطعم عمرو ربيع كفكرة جذابة لمعت في أذهان المؤسسين...',
             textInside: 'استمتع بأجواء استثنائية وهادئة صُممت خصيصاً لتمنحك الراحة...',
             taxText: 'جميع الأسعار بالجنيه المصري وتشمل الضريبة والخدمة',
             slide1: 'صوره.png', slide2: 'صوره.png', slide3: 'صوره.png',
@@ -227,6 +245,7 @@
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'block';
                 await loadCloudData();
+                listenToOrders(); // استماع لحظي للطلبات الواردة
             } else {
                 document.getElementById('error-msg').style.display = 'block';
             }
@@ -245,6 +264,66 @@
             } catch (e) {
                 console.error("خطأ في جلب البيانات:", e);
             }
+        }
+
+        // الاستماع للطلبات الواردة لحظياً وعرضها في لوحة التحكم
+        function listenToOrders() {
+            onSnapshot(collection(db, "orders"), (snapshot) => {
+                const ordersContainer = document.getElementById('orders-container');
+                ordersContainer.innerHTML = '';
+
+                if (snapshot.empty) {
+                    ordersContainer.innerHTML = '<p style="text-align: center; color: #666;">لا توجد طلبات جديدة حالياً.</p>';
+                    return;
+                }
+
+                snapshot.forEach((orderDoc) => {
+                    const order = orderDoc.data();
+                    const orderId = orderDoc.id;
+
+                    const itemsList = order.items.map(i => `${i.name} (×${i.qty})`).join(' - ');
+                    const isApproved = order.status === 'تمت الموافقة';
+
+                    const card = document.createElement('div');
+                    card.className = 'order-card';
+                    card.innerHTML = `
+                        <div class="order-header">
+                            <span>👤 العميل: ${order.customerName}</span>
+                            <span class="status-badge ${isApproved ? 'status-approved' : 'status-pending'}">${order.status || 'قيد المراجعة'}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>📞 الهاتف:</strong> ${order.customerPhone}</p>
+                            <p><strong>📍 العنوان:</strong> ${order.customerAddress}</p>
+                            <p><strong>📝 ملاحظات:</strong> ${order.customerNotes || 'لا توجد ملاحظات'}</p>
+                            <p><strong>🛍️ الأصناف:</strong> ${itemsList}</p>
+                            <p><strong>💰 الإجمالي:</strong> ${order.totalAmount} ج.م</p>
+                            <div style="margin-top: 10px; display: flex; gap: 10px;">
+                                ${!isApproved ? `<button class="btn-approve" data-id="${orderId}">✅ موافقة على الطلب</button>` : ''}
+                                <button class="btn-remove-order" data-id="${orderId}">🗑️ حذف الطلب</button>
+                            </div>
+                        </div>
+                    `;
+                    ordersContainer.appendChild(card);
+                });
+
+                // أحداث أزرار الموافقة والحذف للطلبات
+                ordersContainer.querySelectorAll('.btn-approve').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.dataset.id;
+                        await updateDoc(doc(db, "orders", id), { status: 'تمت الموافقة' });
+                        alert('✅ تم الموافقة على الطلب بنجاح!');
+                    });
+                });
+
+                ordersContainer.querySelectorAll('.btn-remove-order').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.dataset.id;
+                        if (confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟")) {
+                            await deleteDoc(doc(db, "orders", id));
+                        }
+                    });
+                });
+            });
         }
 
         function fillFormValues() {
@@ -294,7 +373,6 @@
                 container.appendChild(box);
             });
 
-            // إضافة الحوادث للتعديل الحسي
             container.querySelectorAll('.item-input').forEach(inp => {
                 inp.addEventListener('change', (e) => {
                     const { cat, idx, field } = e.target.dataset;
@@ -342,7 +420,7 @@
                 name, price, calories, desc, img
             });
 
-            alert('تمت إضافة الصنف القائمة المحلية، اضغط حفظ للتأكيد على السحابة!');
+            alert('تمت إضافة الصنف بالقائمة المحلية، اضغط حفظ للتأكيد على السحابة!');
             loadMenuEditors();
         });
 
@@ -353,7 +431,6 @@
             currentData.textInside = document.getElementById('text-inside-input').value;
             currentData.taxText = document.getElementById('tax-text-input').value;
 
-            // رفع صور المعرض
             const handleFile = (fileId, keyName) => {
                 return new Promise((resolve) => {
                     const f = document.getElementById(fileId).files[0];
